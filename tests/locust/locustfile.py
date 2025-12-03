@@ -3,7 +3,7 @@ import uuid
 import random
 
 class EscobaPlayer(HttpUser):
-    # Tempo di attesa tra un'azione e l'altra (simula il pensiero umano)
+    # Waiting time between one action and another (simulates human thinking)
     wait_time = between(1, 3)
     
     def on_start(self):
@@ -16,14 +16,14 @@ class EscobaPlayer(HttpUser):
         self.email = f"{self.username}@test.com"
         self.token = None
 
-        # 1. Registrazione
+        # 1. Registration
         with self.client.post("/auth/register", json={
             "username": self.username,
             "password": self.password,
             "email": self.email
         }, catch_response=True) as response:
             if response.status_code == 409:
-                response.success() # Ignora errore se esiste già (nei test ripetuti)
+                response.success() # Ignore error if it already exists (in repeated tests)
             elif response.status_code != 201:
                 response.failure(f"Registration failed: {response.text}")
 
@@ -43,7 +43,7 @@ class EscobaPlayer(HttpUser):
     def view_cards(self):
         """Peso 1: Ogni tanto guarda le carte"""
         if self.token:
-            headers = {"Authorization": f"Bearer {self.token}"} # Header pronto per quando implementeremo la verifica
+            headers = {"Authorization": f"Bearer {self.token}"} # Header ready for when we implement verification
             self.client.get("/cards/cards", headers=headers)
 
     @task(2)
@@ -58,10 +58,10 @@ class EscobaPlayer(HttpUser):
         if not self.token:
             return
 
-        # Simula creazione match contro un avversario fisso (o se stesso per test)
+        # Simulate a match against a fixed opponent (or self for testing)
         opponent = "luigi" 
         
-        # Crea Partita
+        # Create match
         res = self.client.post("/matches", json={
             "player1": self.username,
             "player2": opponent
@@ -70,7 +70,7 @@ class EscobaPlayer(HttpUser):
         if res.status_code == 201:
             match_id = res.json().get("match_id")
             
-            # Controlla lo stato della partita 3 volte (simula i turni)
+            # Control the match state 3 times (simulate turns)
             for _ in range(3):
                 self.client.get(f"/matches/{match_id}?player={self.username}")
-                # Qui potremmo aggiungere self.client.post(...) per giocare carte
+                # Here we could add self.client.post(...) to play cards

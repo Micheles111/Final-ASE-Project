@@ -9,7 +9,7 @@ import re
 
 app = Flask(__name__)
 
-# --- CONFIGURAZIONE ---
+# --- Configurazione Database e Secret Key ---
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL', 'postgresql://admin:password123@postgres:5432/escoba_db'
 )
@@ -18,7 +18,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'super_secret_key')
 
 db = SQLAlchemy(app)
 
-# --- MODELLI DATABASE ---
+# --- DataBase Model for User ---
 class User(db.Model):
     __tablename__ = 'users'
     
@@ -44,7 +44,7 @@ class User(db.Model):
 with app.app_context():
     db.create_all()
 
-# --- HELPER FUNZIONI ---
+# --- FUNCTIONS HELPER ---
 
 def token_required(f):
     @wraps(f)
@@ -84,7 +84,7 @@ def validate_password_complexity(password):
 def health_check():
     return jsonify({"status": "healthy", "service": "auth-service"}), 200
 
-# NUOVO ENDPOINT: LISTA UTENTI (PER ADMIN)
+# New endpoint to get all users (for admin purposes)
 @app.route('/auth/users', methods=['GET'])
 def get_all_users():
     users = User.query.all()

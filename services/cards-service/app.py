@@ -3,27 +3,27 @@ import os
 
 app = Flask(__name__)
 
-# --- GENERAZIONE MAZZO ---
+# --- DECK GENERATION ---
 def generate_deck():
     """Genera i dati per le 40 carte con dettagli"""
     suits = ["Oros", "Copas", "Espadas", "Bastos"]
-    # Mapping per i valori di gioco (La Scopa: 8,9,10 valgono 8,9,10)
-    # Mapping per i nomi (1-7 sono numeri, 8=Sota, 9=Caballo, 10=Rey)
+    # Mapping for game values ​​(La Scopa: 8, 9, 10 are worth 8, 9, 10)
+    # Mapping for names (1-7 are numbers, 8=Sota, 9=Caballo, 10=Rey)
     deck = []
     card_id = 1
     
     for suit in suits:
-        for i in range(1, 11): # 10 carte per seme
-            # Determina il nome visuale
+        for i in range(1, 11):# 10 cards per suit
+            # Determine the visual name
             name = str(i)
             if i == 8: name = "Sota (10)"
             elif i == 9: name = "Caballo (11)"
             elif i == 10: name = "Rey (12)"
             
-            # Determina il valore per la somma 15
+            # Determine the value for the sum 15
             game_value = i
-            # In alcune varianti 8,9,10 valgono 8,9,10. In altre 8,9,10.
-            # Usiamo i valori nominali del backend MatchService
+            # In some variants, 8,9,10 are equal to 8,9,10. In others, 8,9,10.
+            # We use the nominal values ​​from the MatchService backend
             
             deck.append({
                 "id": card_id,

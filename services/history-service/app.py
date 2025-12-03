@@ -6,7 +6,7 @@ import json
 
 app = Flask(__name__)
 
-# Configurazione DB
+# Configuration database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL', 'postgresql://admin:password123@postgres:5432/escoba_db'
 )
@@ -14,7 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- MODELLO STORICO ---
+# --- HISTORICAL MODEL ---
 class MatchRecord(db.Model):
     __tablename__ = 'match_history'
     
@@ -28,7 +28,7 @@ class MatchRecord(db.Model):
 
     def to_dict(self):
         """Versione sintetica per la lista"""
-        # Parsing sicuro del punteggio
+        # Secure score parsing
         score_data = {}
         try:
             score_data = json.loads(self.final_score) if self.final_score else {}
@@ -96,7 +96,7 @@ def get_user_history(username):
     
     return jsonify([m.to_dict() for m in matches]), 200
 
-# --- NUOVO ENDPOINT: DETTAGLIO PARTITA ---
+# --- New Endpoint: Match Details ---
 @app.route('/history/match/<match_id>', methods=['GET'])
 def get_match_details(match_id):
     match = MatchRecord.query.get(match_id)

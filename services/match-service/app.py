@@ -20,7 +20,7 @@ PLAYER_SERVICE_URL = "https://player-service:5000/players"
 
 MATCHMAKING_QUEUE_KEY = "matchmaking_queue"
 
-# --- UTILS CARTE ---
+# --- UTILS CARTS ---
 def get_initial_deck():
     return list(range(1, 41))
 
@@ -389,8 +389,8 @@ def get_match(match_id):
     requesting_player = request.args.get('player')
     players = state['players']
     
-    # SE È GUEST (LOCALE), NON NASCONDIAMO NULLA
-    # Il backend manda tutto, il frontend decide cosa mostrare
+    # IF IT'S GUEST (LOCAL), WE DON'T HIDE ANYTHING
+    # The backend sends everything, the frontend decides what to show
     is_local_game = "Guest" in players
     
     if not requesting_player and not is_local_game: return jsonify(state), 200

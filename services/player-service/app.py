@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-# Configurazione DB
+# Configuration DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL', 'postgresql://admin:password123@postgres:5432/escoba_db'
 )
@@ -14,8 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- MODELLI DATABASE ---
-
+# --- DATABASE MODELS ---
 class Player(db.Model):
     __tablename__ = 'players'
     username = db.Column(db.String(50), primary_key=True)
@@ -107,8 +106,7 @@ def get_leaderboard():
     ).limit(50).all()
     return jsonify([p.to_dict() for p in top_players]), 200
 
-# --- SEZIONE AMICI ---
-
+# --- FRIENDS SECTION ---
 @app.route('/friends/list/<username>', methods=['GET'])
 def get_friends_list(username):
     me = Player.query.get(username)
@@ -154,7 +152,7 @@ def send_friend_request():
     if sender == target: return jsonify({"error": "Cannot add yourself"}), 400
     if not Player.query.get(target): return jsonify({"error": "Player not found"}), 404
     
-    # CONTROLLO: Verifica se esiste GIA' una relazione (pending o accepted) in QUALSIASI direzione
+    # Control: Check if a relationship (pending or accepted) already exists in ANY direction
     existing = Friendship.query.filter(
         or_(
             and_(Friendship.requester == sender, Friendship.receiver == target),

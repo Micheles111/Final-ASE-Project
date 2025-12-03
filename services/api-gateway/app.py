@@ -1,12 +1,12 @@
 from flask import Flask, jsonify, request
 import requests
-# Disabilita i warning di sicurezza per i certificati self-signed
+# Disable security warnings for self-signed certificates
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 app = Flask(__name__)
 
-# Mappa dei servizi AGGIORNATA A HTTPS
+# Map of services UPDATED TO HTTPS
 SERVICES = {
     "auth": "https://auth-service:5000",
     "cards": "https://cards-service:5000",
@@ -32,7 +32,7 @@ def forward_request(service_name, service_prefix, path):
     headers = {key: value for key, value in request.headers if key != 'Host'}
     
     try:
-        # verify=False è fondamentale per i certificati self-signed
+        # verify=False is crucial for self-signed certificates
         resp = requests.request(
             method=request.method,
             url=url,
@@ -84,12 +84,12 @@ def proxy_invites(path):
 def proxy_friends(path):
     return forward_request("player", "friends", path)
 
-# --- NUOVA ROTTA CORRETTA PER MATCHMAKING ---
+# --- New route for matchmaking ---
 @app.route('/matchmaking', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE'])
 @app.route('/matchmaking/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def proxy_matchmaking(path):
-    # Inoltra al servizio MATCH, ma usando il prefisso "matchmaking"
-    # Così l'URL diventa: http://match-service:5000/matchmaking/join
+    # Forward to the MATCH service, but use the "matchmaking" prefix
+    # So the URL becomes: http://match-service:5000/matchmaking/join
     return forward_request("match", "matchmaking", path)
 
 if __name__ == '__main__':
