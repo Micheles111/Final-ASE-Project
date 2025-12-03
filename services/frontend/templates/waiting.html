@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Searching for Match...</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #2e7d32; color: white; text-align: center; }
+        .container { background: rgba(0,0,0,0.5); padding: 40px; border-radius: 15px; }
+        .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #ffeb3b; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        button { padding: 10px 20px; background: #d32f2f; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Searching for Opponent...</h1>
+        <div class="spinner"></div>
+        <p>Please wait while we find a worthy player.</p>
+        
+        <form action="/matchmaking/cancel" method="POST">
+            <button type="submit">Cancel Search</button>
+        </form>
+    </div>
+
+    <script>
+        // Polling per controllare se il match è stato trovato
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/proxy/matchmaking/status');
+                const data = await response.json();
+                
+                if (data.status === 'matched' && data.match_id) {
+                    window.location.href = `/game/${data.match_id}`;
+                } else if (data.status === 'none') {
+                    // Se per qualche motivo siamo usciti dalla coda
+                    window.location.href = '/dashboard';
+                }
+                // Se 'waiting', continua ad aspettare
+            } catch (error) {
+                console.error("Polling error", error);
+            }
+        }, 2000); // Check every 2 seconds
+    </script>
+</body>
+</html>

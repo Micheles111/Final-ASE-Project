@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rules & Cards - La Escoba</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+        
+        .rules-section { background: #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 5px solid #007bff; }
+        .rules-section ul { list-style-type: disc; margin-left: 20px; }
+        .rules-section li { margin-bottom: 8px; }
+
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px; }
+        .card-item { text-align: center; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fff; transition: transform 0.2s; }
+        .card-item:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .card-item img { width: 100px; height: 152px; object-fit: cover; border-radius: 5px; margin-bottom: 5px; }
+        .card-name { font-weight: bold; font-size: 0.9rem; color: #555; }
+        .card-value { font-size: 0.8rem; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+        
+        <h1>📜 Game Rules & Information</h1>
+
+        <div class="rules-section">
+            <h2>How to Play "La Escoba"</h2>
+            <p>The goal is to capture cards from the table by matching sums of 15.</p>
+            <ul>
+                <li><strong>The Deck:</strong> 40 Spanish cards (Oros, Copas, Espadas, Bastos).</li>
+                <li><strong>Capture Rule:</strong> Play a card from your hand. If your card + one or more cards on the table sum exactly to <strong>15</strong>, you capture them all!</li>
+                <li><strong>Values:</strong>
+                    <ul>
+                        <li>Cards 1-7: Face value.</li>
+                        <li>Sota (10): Worth 8.</li>
+                        <li>Caballo (11): Worth 9.</li>
+                        <li>Rey (12): Worth 10.</li>
+                    </ul>
+                </li>
+                <li><strong>Escoba:</strong> If you clear the entire table, you score 1 point immediately (Escoba!).</li>
+                <li><strong>End Game:</strong> When the deck is empty, the last player who captured cards takes everything remaining on the table.</li>
+            </ul>
+            <h3>Scoring Points</h3>
+            <ul>
+                <li><strong>Escobas:</strong> 1 point each.</li>
+                <li><strong>Most Cards:</strong> 1 point for > 20 cards.</li>
+                <li><strong>Most Coins (Oros):</strong> 1 point for > 5 coins.</li>
+                <li><strong>Settebello (7 of Coins):</strong> 1 point.</li>
+            </ul>
+        </div>
+
+        <h2>🃏 Card Collection</h2>
+        <p>Here are all the cards in the deck with their game values.</p>
+        
+        <div class="cards-grid">
+            {% for card in cards %}
+            <div class="card-item">
+                <img src="{{ url_for('static', filename='cards/' + card.image_file) }}" alt="{{ card.name }}" 
+                     onerror="this.src='{{ url_for('static', filename='cards/back.png') }}'">
+                <div class="card-name">{{ card.name }}</div>
+                <div class="card-value">Value: {{ card.game_value }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

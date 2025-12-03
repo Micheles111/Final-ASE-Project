@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Profile - La Escoba</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; margin: 0; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 350px; }
+        input { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        h2 { text-align: center; color: #333; }
+        .alert { color: green; text-align: center; margin-bottom: 10px; padding: 10px; background: #d4edda; border-radius: 4px; }
+        label { font-weight: bold; font-size: 0.9rem; color: #555; }
+        .readonly-field { background-color: #e9ecef; color: #666; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard" style="text-decoration: none; color: #666;">&larr; Back to Dashboard</a>
+        <h2>My Profile</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form action="/profile/update" method="POST">
+            <label>Username (Cannot be changed)</label>
+            <input type="text" value="{{ user.username }}" class="readonly-field" readonly>
+
+            <label>Email Address</label>
+            <input type="email" name="email" value="{{ user.email }}" required>
+
+            <label>New Password (leave empty to keep current)</label>
+            <input type="password" name="password" placeholder="Enter new password">
+
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+</body>
+</html>

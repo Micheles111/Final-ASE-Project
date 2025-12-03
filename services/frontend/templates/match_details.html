@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Match Details - La Escoba</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
+        
+        .match-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        .match-vs { font-size: 2rem; font-weight: bold; color: #333; }
+        .match-meta { color: #666; margin-top: 5px; }
+        
+        .score-board { display: flex; justify-content: center; gap: 50px; margin-bottom: 40px; }
+        .player-score-card { background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; min-width: 200px; border: 1px solid #ddd; }
+        .player-score-card.winner { border: 2px solid #28a745; background: #e8f5e9; }
+        .score-num { font-size: 3rem; font-weight: bold; color: #007bff; margin: 10px 0; }
+        .winner-badge { background: #28a745; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+        .details-section { background: #fff3e0; padding: 20px; border-radius: 8px; border-left: 5px solid #ff9800; }
+        .details-list { text-align: left; }
+        .details-list h4 { margin-top: 0; color: #e65100; }
+        .details-list ul { padding-left: 20px; }
+        
+        .rematch-container { text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .btn-rematch { background-color: #673ab7; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 1.1rem; cursor: pointer; font-weight: bold; }
+        .btn-rematch:hover { background-color: #512da8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+        
+        <div class="match-header">
+            <div class="match-vs">
+                {{ match.players[0] }} <span style="color:#aaa; font-size:1.5rem;">vs</span> {{ match.players[1] }}
+            </div>
+            <div class="match-meta">
+                Date: {{ match.date[:16].replace('T', ' ') }} | ID: <small>{{ match.match_id }}</small>
+            </div>
+        </div>
+
+        <div class="score-board">
+            {% for player in match.players %}
+            <div class="player-score-card {{ 'winner' if match.winner == player else '' }}">
+                <h3>
+                    {{ player }}
+                    {% if match.winner == player %} <span class="winner-badge">WINNER</span> {% endif %}
+                </h3>
+                <div class="score-num">
+                    {{ match.score.get(player, 0) }}
+                </div>
+                <small>Points</small>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="details-section">
+            <h3>📝 Match Analysis Log</h3>
+            <div style="display: flex; gap: 40px;">
+                {% for player in match.players %}
+                <div class="details-list" style="flex: 1;">
+                    <h4>{{ player }}'s Achievements:</h4>
+                    <ul>
+                        {% if match.log and match.log.get(player) %}
+                            {% for event in match.log.get(player) %}
+                                <li>{{ event }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li style="color: #999;">No points recorded.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="rematch-container">
+            {% set opponent = match.players[1] if match.players[0] == user else match.players[0] %}
+            
+            <p>Want to play again against <strong>{{ opponent }}</strong>?</p>
+            
+            <form action="/create_match" method="POST">
+                <input type="hidden" name="opponent" value="{{ opponent }}">
+                <button type="submit" class="btn-rematch">🔄 Request Rematch</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

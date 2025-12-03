@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Login - System Control</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #2c3e50; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 300px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        button:hover { background: #c0392b; }
+        h2 { color: #e74c3c; }
+        .alert { color: red; margin-bottom: 10px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔒 System Admin</h2>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="text" name="username" placeholder="Admin Username" required>
+            <input type="password" name="password" placeholder="Admin Password" required>
+            <button type="submit">Access Control Panel</button>
+        </form>
+    </div>
+</body>
+</html>

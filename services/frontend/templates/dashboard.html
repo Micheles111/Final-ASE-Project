@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - La Escoba</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f7f6; 
+            padding: 20px; 
+            color: #333;
+            margin: 0;
+        }
+
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center; 
+            background: white; padding: 15px 30px; border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;
+        }
+        .navbar h1 { margin: 0; font-size: 1.5rem; color: #2c3e50; }
+        .nav-links a { text-decoration: none; color: #555; font-weight: 600; margin-left: 20px; transition: color 0.2s; }
+        .nav-links a:hover { color: #007bff; }
+        .nav-links .logout { color: #dc3545; }
+
+        .main-grid {
+            display: grid; grid-template-columns: 1fr 2fr; gap: 25px; margin-bottom: 30px;
+        }
+
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .card h2 { margin-top: 0; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-size: 1.2rem; color: #2c3e50; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-item { text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #2c3e50; display: block; }
+        .stat-label { font-size: 0.85rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #95a5a6; font-size: 0.85rem; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        td { padding: 15px 0; border-bottom: 1px solid #f9f9f9; vertical-align: middle; }
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+        .status-turn { background-color: #e8f5e9; color: #2e7d32; }
+        .status-wait { background-color: #f1f2f6; color: #7f8c8d; }
+
+        .btn { padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer; transition: transform 0.1s; display: inline-block; }
+        .btn:active { transform: scale(0.98); }
+        .btn-play { background: #007bff; color: white; }
+        .btn-surrender { background: #ffebee; color: #c62828; margin-left: 5px; }
+        .btn-accept { background: #27ae60; color: white; margin-right: 5px; }
+        .btn-reject { background: #e74c3c; color: white; }
+
+        /* AZIONI IN BASSO (3 COLONNE) */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 3 Colonne uguali */
+            gap: 25px;
+        }
+        .action-card {
+            background: white; padding: 30px; border-radius: 12px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .action-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .action-icon { font-size: 3rem; display: block; margin-bottom: 15px; }
+        .action-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 10px; display: block; color: #34495e; }
+        .action-desc { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 20px; }
+        
+        .btn-full { width: 100%; padding: 12px; font-size: 1rem; }
+        .btn-random { background: #9b59b6; color: white; }
+        .btn-cpu { background: #f1c40f; color: #333; }
+        .btn-local { background: #e67e22; color: white; }
+        
+        .mini-form input { width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .mini-form button { width: 100%; background: #34495e; color: white; }
+
+        .alert-box { background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1>♠️ La Escoba Dashboard</h1>
+        <div class="nav-links">
+            <span>Welcome, <strong>{{ user }}</strong></span>
+            <a href="/match_history">📜 History</a>
+            <a href="/friends">👥 Friends</a>
+            <a href="/leaderboard">🏆 Rank</a>
+            <a href="/info">📖 Rules</a>
+            <a href="/profile">👤 Profile</a>
+            <a href="/logout" class="logout">Logout</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert-box">{{ messages[0] }}</div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="main-grid">
+        <div class="card">
+            <h2>📊 Stats & Quick Invite</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value">{{ profile.get('matches_played', 0) }}</span>
+                    <span class="stat-label">Played</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ profile.get('matches_won', 0) }}</span>
+                    <span class="stat-label">Won</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ profile.get('total_score', 0) }}</span>
+                    <span class="stat-label">Points</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ "%.0f"|format(profile.get('win_rate', 0.0)) }}%</span>
+                    <span class="stat-label">Win Rate</span>
+                </div>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Know a username? Invite them directly:</p>
+            <form action="/create_match" method="POST" class="mini-form">
+                <input type="text" name="opponent" placeholder="Username..." required>
+                <button type="submit" class="btn">Send Invite</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>🔥 Active Arena</h2>
+
+            {% if invites_received %}
+            <div style="margin-bottom: 20px; background: #fff8e1; padding: 10px; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #f57c00;">🔔 Pending Invites</h4>
+                <table>
+                    <tbody>
+                        {% for invite in invites_received %}
+                        <tr>
+                            <td><strong>{{ invite.challenger }}</strong> wants to play!</td>
+                            <td style="text-align: right;">
+                                <a href="/invite/accept/{{ invite.match_id }}" class="btn btn-accept">Accept</a>
+                                <a href="/invite/reject/{{ invite.match_id }}" class="btn btn-reject">Reject</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if active_matches %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>OPPONENT</th>
+                        <th>SCORE</th>
+                        <th>STATUS</th>
+                        <th style="text-align: right;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in active_matches %}
+                    <tr>
+                        <td><strong>{{ match.opponent }}</strong></td>
+                        <td>{{ match.scores.get(user, 0) }} - {{ match.scores.get(match.opponent, 0) }}</td>
+                        <td>
+                            {% if match.turn == user %}
+                                <span class="status-badge status-turn">YOUR TURN</span>
+                            {% else %}
+                                <span class="status-badge status-wait">WAITING</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="/game/{{ match.match_id }}" class="btn btn-play">Play</a>
+                            <form action="/surrender/{{ match.match_id }}" method="POST" style="display:inline;" onsubmit="return confirm('Give up?');">
+                                <button type="submit" class="btn btn-surrender">🏳️</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div style="text-align: center; padding: 30px; color: #bdc3c7;">
+                    <p>No active games right now.</p>
+                </div>
+            {% endif %}
+            
+            {% if invites_sent %}
+                <p style="font-size: 0.8rem; color: #95a5a6; margin-top: 15px;">
+                    ⏳ Waiting for response from: 
+                    {% for i in invites_sent %} <strong>{{ i.opponent }}</strong>{% if not loop.last %}, {% endif %}{% endfor %}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="actions-grid">
+        
+        <div class="action-card">
+            <div>
+                <span class="action-icon">🌍</span>
+                <span class="action-title">Online Matchmaking</span>
+                <p class="action-desc">Find a random opponent instantly.</p>
+            </div>
+            <form action="/matchmaking/join" method="POST">
+                <button type="submit" class="btn btn-full btn-random">Search Opponent</button>
+            </form>
+        </div>
+
+        <div class="action-card">
+            <div>
+                <span class="action-icon">🤖</span>
+                <span class="action-title">Bot Training</span>
+                <p class="action-desc">Practice strategies against AI.</p>
+            </div>
+            <form action="/create_match_cpu" method="POST">
+                <button type="submit" class="btn btn-full btn-cpu">Play vs CPU</button>
+            </form>
+        </div>
+
+        <div class="action-card">
+            <div>
+                <span class="action-icon">📱</span>
+                <span class="action-title">Local Pass & Play</span>
+                <p class="action-desc">Two players on this device.</p>
+            </div>
+            <form action="/create_match_local" method="POST">
+                <button type="submit" class="btn btn-full btn-local">Start Local Match</button>
+            </form>
+        </div>
+
+    </div>
+
+</body>
+</html>

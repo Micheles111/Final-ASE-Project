@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # --- DATABASES ---
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: escoba_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # HEALTHCHECK: Controlla se il DB è pronto
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d escoba_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-network
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    # Redis parte subito, ma per sicurezza mettiamo un check anche qui
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-network
+
+  # --- MICROSERVICES (Backend - HTTPS) ---
+  
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./certs:/app/certs:ro
+    command: gunicorn --bind 0.0.0.0:5000 --certfile=/app/certs/cert.pem --keyfile=/app/certs/key.pem app:app
+    restart: on-failure
+    depends_on:
+      - auth-service
+      - cards-service
+      - player-service
+      - match-service
+      - history-service
+    networks:
+      - backend-network
+
+  auth-service:
+    build: ./services/auth-service
+    environment:
+      DATABASE_URL: postgresql://admin:password123@postgres:5432/escoba_db
+      SECRET_KEY: super_secret_key
+    volumes:
+      - ./certs:/app/certs:ro
+    command: gunicorn --bind 0.0.0.0:5000 --certfile=/app/certs/cert.pem --keyfile=/app/certs/key.pem app:app
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy  # Aspetta che Postgres sia PRONTO
+    networks:
+      - backend-network
+
+  cards-service:
+    build: ./services/cards-service
+    volumes:
+      - ./certs:/app/certs:ro
+    command: gunicorn --bind 0.0.0.0:5000 --certfile=/app/certs/cert.pem --keyfile=/app/certs/key.pem app:app
+    restart: on-failure
+    networks:
+      - backend-network
+
+  player-service:
+    build: ./services/player-service
+    environment:
+      DATABASE_URL: postgresql://admin:password123@postgres:5432/escoba_db
+    volumes:
+      - ./certs:/app/certs:ro
+    command: gunicorn --bind 0.0.0.0:5000 --certfile=/app/certs/cert.pem --keyfile=/app/certs/key.pem app:app
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  match-service:
+    build: ./services/match-service
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - ./certs:/app/certs:ro
+    command: gunicorn --bind 0.0.0.0:5000 --certfile=/app/certs/cert.pem --keyfile=/app/certs/key.pem app:app
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  history-service:
+    build: ./services/history-service
+    environment:
+      DATABASE_URL: postgresql://admin:password123@postgres:5432/escoba_db
+    volumes:
+      - ./certs:/app/certs:ro
+    command: gunicorn --bind 0.0.0.0:5000 --certfile=/app/certs/cert.pem --keyfile=/app/certs/key.pem app:app
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  # --- FRONTEND SERVICE (UI Web) ---
+  frontend-service:
+    build: ./services/frontend
+    ports:
+      - "8080:5000"
+    volumes:
+      - ./certs:/app/certs:ro
+    restart: on-failure
+    depends_on:
+      - api-gateway
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

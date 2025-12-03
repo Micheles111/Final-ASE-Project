@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Match History - La Escoba</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #2c3e50; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; }
+        tr:hover { background-color: #f9f9f9; }
+        
+        .win { color: #27ae60; font-weight: bold; }
+        .loss { color: #c0392b; font-weight: bold; }
+        .draw { color: #f39c12; font-weight: bold; }
+        
+        .btn-analyze { background-color: #6c757d; text-decoration: none; padding: 6px 12px; border-radius: 4px; color: white; font-size: 0.9rem; transition: background 0.2s; }
+        .btn-analyze:hover { background-color: #5a6268; }
+
+        .btn-add-friend {
+            background-color: #2196f3; border: none; color: white; 
+            padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; 
+            cursor: pointer; margin-left: 10px; display: inline-block;
+        }
+        .btn-add-friend:hover { background-color: #1976d2; }
+        
+        .opp-container { display: flex; align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+        
+        <h1>📜 Full Match History</h1>
+
+        {% if history %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Opponent</th>
+                    <th>Result</th>
+                    <th>Score</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in history %}
+                {% set opponent = match.players[1] if match.players[0] == user else match.players[0] %}
+                <tr>
+                    <td>{{ match.date[:16].replace('T', ' ') }}</td>
+                    <td>
+                        <div class="opp-container">
+                            <strong>{{ opponent }}</strong>
+                            {% if opponent != 'CPU' and opponent != 'Guest' and opponent not in current_friends %}
+                            <form action="/friends/add" method="POST" style="margin: 0;">
+                                <input type="hidden" name="username" value="{{ opponent }}">
+                                <button type="submit" class="btn-add-friend" title="Add as Friend">➕</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if match.winner == user %}
+                            <span class="win">WON</span>
+                        {% elif match.winner == 'Draw' or match.winner == None %}
+                            <span class="draw">DRAW</span>
+                        {% else %}
+                            <span class="loss">LOST</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ match.score.get(user, 0) }} - 
+                        {% if match.players[0] == user %}
+                            {{ match.score.get(match.players[1], 0) }}
+                        {% else %}
+                            {{ match.score.get(match.players[0], 0) }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/match/analyze/{{ match.match_id }}" class="btn-analyze">🔍 Analyze</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #999; margin-top: 30px;">No matches played yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

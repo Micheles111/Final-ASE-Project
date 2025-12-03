@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: La Escoba Card Game API
+  description: Microservices backend for the Spanish card game "La Escoba".
+  version: 1.0.0
+  contact:
+    name: ASE Project Team
+
+servers:
+  - url: https://localhost:5000
+    description: Local Development Server (HTTPS Gateway)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  # --- AUTH SERVICE ---
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      security: [] # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '201':
+          description: User registered successfully
+        '409':
+          description: Username or email already exists
+
+  /auth/login:
+    post:
+      summary: Login and retrieve JWT token
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user_id: { type: integer }
+        '401':
+          description: Invalid credentials
+
+  # --- PLAYER SERVICE ---
+  /players/{username}:
+    post:
+      summary: Initialize player profile
+      tags: [Player]
+      parameters:
+        - in: path
+          name: username
+          schema: { type: string }
+          required: true
+      responses:
+        '201':
+          description: Profile created
+    get:
+      summary: Get player statistics
+      tags: [Player]
+      parameters:
+        - in: path
+          name: username
+          schema: { type: string }
+          required: true
+      responses:
+        '200':
+          description: Player stats returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username: { type: string }
+                  matches_played: { type: integer }
+                  matches_won: { type: integer }
+                  total_score: { type: integer }
+                  win_rate: { type: number }
+
+  # --- CARDS SERVICE ---
+  /cards/cards:
+    get:
+      summary: Get the full deck of cards
+      tags: [Cards]
+      responses:
+        '200':
+          description: List of 40 Spanish cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    suit: { type: string }
+                    value: { type: integer }
+
+  # --- MATCH SERVICE ---
+  /matches:
+    post:
+      summary: Create a new match
+      tags: [Match]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                player1: { type: string }
+                player2: { type: string }
+      responses:
+        '201':
+          description: Match created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  match_id: { type: string }
+                  turn: { type: string }
+
+  /matches/{match_id}:
+    get:
+      summary: Get match state (hand and table)
+      tags: [Match]
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: player
+          required: true
+          schema: { type: string }
+          description: The player requesting the state (to hide opponent cards)
+      responses:
+        '200':
+          description: Current match state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  table: { type: array, items: { type: integer } }
+                  status: { type: string }
+                  turn: { type: string }
+
+  /matches/{match_id}/play:
+    post:
+      summary: Play a card (move)
+      tags: [Match]
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                player: { type: string }
+                card_id: { type: integer }
+      responses:
+        '200':
+          description: Move accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  captured: { type: array, items: { type: integer } }
+                  escoba: { type: boolean }
+
+  # --- HISTORY SERVICE ---
+  /history/{username}:
+    get:
+      summary: Get match history for a player
+      tags: [History]
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: List of past matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    match_id: { type: string }
+                    winner: { type: string }
+                    date: { type: string }

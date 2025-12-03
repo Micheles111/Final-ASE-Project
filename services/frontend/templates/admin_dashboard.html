@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - System Overview</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f8; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .header h1 { margin: 0; }
+        .btn-logout { background-color: #e74c3c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; }
+        
+        .section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2c3e50; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #ecf0f1; }
+        tr:hover { background-color: #f9f9f9; }
+        
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; }
+        .card-item { text-align: center; border: 1px solid #eee; padding: 5px; border-radius: 5px; font-size: 0.8rem; }
+        .card-item img { width: 60px; height: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ LocalHost Admin</h1>
+            <a href="/admin/logout" class="btn-logout">Logout</a>
+        </div>
+
+        <div class="section">
+            <h2>👥 Registered Users (Auth Service)</h2>
+            <p>Total users: <strong>{{ users|length }}</strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td><strong>{{ u.username }}</strong></td>
+                        <td>{{ u.email }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3">No users found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🏆 Player Statistics (Player Service)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Played</th>
+                        <th>Won</th>
+                        <th>Total Score</th>
+                        <th>Win Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in players %}
+                    <tr>
+                        <td><strong>{{ p.username }}</strong></td>
+                        <td>{{ p.matches_played }}</td>
+                        <td style="color: green;">{{ p.matches_won }}</td>
+                        <td style="color: blue;">{{ p.total_score }}</td>
+                        <td>{{ "%.1f"|format(p.win_rate) }}%</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5">No player profiles found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🃏 System Card Deck</h2>
+            <div class="cards-grid">
+                {% for card in cards %}
+                <div class="card-item">
+                    <img src="{{ url_for('static', filename='cards/' + card.image_file) }}" onerror="this.src='{{ url_for('static', filename='cards/back.png') }}'">
+                    <div>{{ card.name }}</div>
+                    <div style="color: #999;">Val: {{ card.game_value }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
