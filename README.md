@@ -16,7 +16,7 @@ login into the game - Si
 check/modify my profile - Si
 be safe about my account data - Creo que si
 see the overall card collection - Si
-view the details of a card - Si pero quiero perfeccionarlo hacinedo una pagina por cada carta puede ser una option o un añadido para meterle algo de nuevo texto
+view the details of a card - 1. Si pero quiero perfeccionarlo hacinedo una pagina por cada carta puede ser una option o un añadido para meterle algo de nuevo texto
 start a new game - Si
 select the subset of cards - Si
 select a card - Si
@@ -29,10 +29,10 @@ that the rules are not violated - si
 view the list of my old matches - si
 view the details of one of my matches - si
 view the leaderboards - si entre amigos
-prevent people to tamper my old matches - no lo se a q se refiere
+prevent people to tamper my old matches - 2.no lo se a q se refiere
 
 Green: 
-the timer of the move - no, pero implemetar
+the timer of the move - 3.no, pero implemetar
 who's turn it is  - si
 see which cards I have and which cards I have to play - no
 to be able to see the cards in my hand - si
@@ -43,15 +43,15 @@ request to a rematch - yes
 I want to send a battle invitation - yes
 to able to surrender - yes
 be able to ask for a rematch - yes
-I want to receive one hint per game - creo que no
-I want to distinguish ranked or friendly matches - no
-I wanto to play locally - creo que si
-I want to use emojis during the match - no, pero se puede hacer
+I want to receive one hint per game - no, no es preferente si sobra tiempo pero solo con la ia
+I want to distinguish ranked or friendly matches - no, si como de dificult es
+I wanto to play locally - si
+I want to use emojis during the match - no, pero se puede hacer un oci minichat
 add friends - yes
-view my firends list - no lo se al 100
-remove a firend from my friends list - no lo se al 100
+view my firends list - si
+remove a firend from my friends list - si
 view my friend matches - no
-unlock achievements/objective - no pero se podria hacer
+unlock achievements/objective - no pero se podria hacer, ganas new emojis,avatar
 
 
 # FinalASEProject1 - La Escoba Card Game
