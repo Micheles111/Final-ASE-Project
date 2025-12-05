@@ -96,6 +96,18 @@
             </div>
         </div>
 
+        <div class="section" style="margin-bottom: 20px;">
+            <h2>🔗 Estado de Microservicios</h2>
+            <div style="display: flex; gap: 20px; justify-content: space-around;">
+                {% for service, status in service_status.items() %}
+                <div style="text-align: center; padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: {% if '🟢' in status %}#e8f5e9{% elif '🟡' in status %}#fffde7{% else %}#ffebee{% endif %};">
+                    <strong style="color: #2c3e50;">{{ service }} Service</strong>
+                    <p style="margin: 5px 0 0 0; color: {% if '🟢' in status %}#2e7d32{% elif '🟡' in status %}#ffc107{% else %}#c0392b{% endif %}; font-weight: bold;">{{ status }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
     </div>
 </body>
 </html>

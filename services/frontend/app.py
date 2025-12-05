@@ -432,12 +432,31 @@ def admin_login():
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
+# En services/frontend/app.py, dentro de la función admin_dashboard:
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
+    service_status = {}
+    # Servicios clave para verificar su estado
+    for service_key, endpoint in [
+        ('Auth', '/auth/health'),
+        ('Player', '/players/health'),
+        ('Cards', '/cards/health'),
+        ('Match', '/matches/health'),
+        ('History', '/history/health')
+    ]:
+        resp = api_request("GET", endpoint)
+        if resp and resp.status_code == 200:
+            service_status[service_key] = " Healthy"
+        elif resp and resp.status_code == 503:
+            service_status[service_key] = " Gateway Error (Service likely down)"
+        else:
+            service_status[service_key] = " Unhealthy/Down"
+
+    # Código existente para obtener datos
     users_resp = api_request("GET", "/auth/users")
     users = users_resp.json() if users_resp and users_resp.status_code == 200 else []
     
@@ -450,7 +469,11 @@ def admin_dashboard():
         raw_cards = cards_resp.json()
         cards = [enrich_card_with_image(c) for c in raw_cards]
         
-    return render_template('admin_dashboard.html', users=users, players=players, cards=cards)
-
+    return render_template('admin_dashboard.html', 
+                           users=users, 
+                           players=players, 
+                           cards=cards,
+                           service_status=service_status)
+    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
