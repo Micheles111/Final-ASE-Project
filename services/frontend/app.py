@@ -231,8 +231,10 @@ def match_analyze(match_id):
 def create_match():
     if 'token' not in session: return redirect(url_for('index'))
     opponent = request.form.get('opponent')
-    endpoint = "/matches"
-    if opponent != "CPU":
+    
+    if opponent == "CPU" or opponent == "Guest":
+        endpoint = "/matches"
+    else:
         endpoint = "/invites"
         
     resp = api_request("POST", endpoint, 
@@ -242,6 +244,9 @@ def create_match():
     if resp and resp.status_code == 201:
         if opponent == "CPU":
             return redirect(url_for('game', match_id=resp.json()['match_id']))
+        elif opponent == "Guest":
+            # Partida Local necesita el parámetro 'local=1'
+            return redirect(url_for('game', match_id=resp.json()['match_id'], local=1)) 
         else:
             flash(f"Challenge sent to {opponent}! Waiting for acceptance.")
             return redirect(url_for('dashboard'))
