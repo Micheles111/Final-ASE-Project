@@ -60,6 +60,7 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('login.html')
 
+
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get('username')
@@ -74,12 +75,18 @@ def login():
         session['username'] = username
         return redirect(url_for('dashboard'))
     else:
-        error_msg = "Login failed."
+        error_msg = "Login fallido. Verifica tus credenciales."
         try:
-            error_msg = resp.json().get('error', 'Login failed.')
+            error_msg = resp.json().get('error', 'Login fallido.')
         except: pass
-        flash(error_msg)
-        return redirect(url_for('index'))
+        flash(f"{error_msg} Si no tienes una cuenta, ¡regístrate ahora!")
+        return redirect(url_for('register')) 
+
+@app.route('/register', methods=['GET'])
+def register_page():
+    # Esta función simplemente renderiza el formulario de registro.
+    # El formulario hace POST a la función 'register' que ya existe.
+    return render_template('register.html')
 
 @app.route('/register', methods=['POST'])
 def register():
