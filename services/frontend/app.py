@@ -7,7 +7,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 app = Flask(__name__)
 app.secret_key = 'frontend_secret_key'
 
-API_GATEWAY = "https://api-gateway:5000"
+API_GATEWAY = "http://api-gateway:5000"
 
 # --- HELPERS ---
 
@@ -66,7 +66,7 @@ def index():
 def login():
     username = request.form.get('username')
     password = request.form.get('password')
-    
+
     resp = api_request("POST", "/auth/login", data={"username": username, "password": password})
     
     if resp and resp.status_code == 200:
@@ -76,21 +76,11 @@ def login():
         session['username'] = username
         return redirect(url_for('dashboard'))
     else:
-        error_msg = "Login fallido. Verifica tus credenciales."
-        
-        # MANEJO DE ERRORES MEJORADO
-        if resp is not None:
-            try:
-                # Intentar obtener el error del JSON de respuesta (lo que hace auth-service)
-                error_msg = resp.json().get('error', 'Login fallido.')
-            except Exception:
-                # Si no es JSON o hay otro error al procesar la respuesta
-                error_msg = f"Error del servicio de autenticación (Cód. {resp.status_code})."
-        else:
-            # Error de conexión (resp es None por timeout o error de red)
-            error_msg = "No se pudo conectar al servicio de autenticación (Gateway). Revisa tu Docker Compose."
-            
-        flash(f"{error_msg} Si no tienes una cuenta, ¡regístrate ahora!")
+        error_msg = "Login failed."
+        try:
+            error_msg = resp.json().get('error', 'Login failed.')
+        except: pass
+        flash(f"{error_msg} if you dont have an account, ¡LOGIN NOW!")
         return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET'])
