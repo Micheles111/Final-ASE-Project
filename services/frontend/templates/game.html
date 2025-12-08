@@ -144,6 +144,10 @@
 
         <div id="status-msg">Loading game...</div>
 
+        <div id="turn-timer" style="font-size: 1.5rem; color: #ffeb3b; font-weight: bold; margin: 10px auto; display: none;">
+            🕒 <span id="timer-value">00:00</span>
+        </div>
+
         <div id="end-game-actions">
             <form action="/create_match" method="POST">
                 <input type="hidden" name="opponent" id="rematch-opponent-input">
@@ -183,7 +187,9 @@
         let selectedCardId = null;
         let isMyTurn = false;
         let lastTurnPlayer = null;
-        let currentVisualPlayer = currentUser; 
+        let currentVisualPlayer = currentUser;
+        let turnStartTime = null;
+        let timerInterval = null;
 
         function getCardData(id) {
             if(id === "hidden") return { url: "/static/cards/back.png", alt: "Back" };
@@ -203,6 +209,7 @@
                 let queryParam = `player=${currentVisualPlayer}`;
                 const response = await fetch(`/api/proxy/match/${matchId}?${queryParam}`);
                 const data = await response.json();
+                
 
                 if (data.last_reaction && data.last_reaction.timestamp !== lastReactionTimestamp) {
                     const reaction = data.last_reaction;
@@ -213,6 +220,7 @@
                 }
 
                 if(data.status === 'finished') {
+                    stopTimer();
                     const statusEl = document.getElementById('status-msg');
                     statusEl.innerHTML = `🏆 MATCH OVER! Winner: ${data.result.winner}`;
                     statusEl.style.backgroundColor = "#d32f2f";
@@ -269,6 +277,13 @@
                 }
 
                 isMyTurn = (data.turn === currentVisualPlayer);
+                
+                if (isMyTurn && data.turn_start_time) {
+                    startTimer(data.turn_start_time);
+                } else {
+                    stopTimer();
+                }
+
                 const statusDiv = document.getElementById('status-msg');
 
                 if(isMyTurn) {
@@ -421,6 +436,56 @@
                 displayEl.style.opacity = '0';
                 displayEl.style.transform = isMe ? 'translate(-50%, 0)' : 'translate(-50%, 0)';
             }, 3000);
+        }
+
+        function startTimer(startTimeString) {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            const timerDiv = document.getElementById('turn-timer');
+            const timerValueSpan = document.getElementById('timer-value');
+            
+            if (!isMyTurn) {
+                timerDiv.style.display = 'none';
+                return;
+            }
+
+            timerDiv.style.display = 'block';
+            
+            // Parse the start time 
+            turnStartTime = new Date(startTimeString);
+
+            function updateTimerDisplay() {
+                const now = new Date();
+                const elapsedMilliseconds = now - turnStartTime;
+                
+                if (elapsedMilliseconds < 0) {
+                    timerValueSpan.innerText = '00:00';
+                    return;
+                }
+
+                const totalSeconds = Math.floor(elapsedMilliseconds / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+
+                const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                timerValueSpan.innerText = formattedTime;
+            }
+
+            // Update immediately and then every second
+            updateTimerDisplay();
+            timerInterval = setInterval(updateTimerDisplay, 1000); 
+        }
+
+        // Function to stop the timer
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('turn-timer').style.display = 'none';
+            document.getElementById('timer-value').innerText = '00:00';
         }
 
         setInterval(updateGameState, 2000);

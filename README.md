@@ -32,7 +32,7 @@ view the leaderboards - si entre amigos
 prevent people to tamper my old matches - 2.no lo se a q se refiere
 
 Green: 
-the timer of the move - 3.no, pero implemetar
+the timer of the move - si
 who's turn it is  - si
 see which cards I have and which cards I have to play - no
 to be able to see the cards in my hand - si
@@ -43,10 +43,10 @@ request to a rematch - yes
 I want to send a battle invitation - yes
 to able to surrender - yes
 be able to ask for a rematch - yes
-I want to receive one hint per game - no, no es preferente si sobra tiempo pero solo con la ia
-I want to distinguish ranked or friendly matches - no, si como de dificult es
+I want to receive one hint per game - no
+I want to distinguish ranked or friendly matches - no
 I wanto to play locally - si
-I want to use emojis during the match - no, pero se puede hacer un oci minichat
+I want to use emojis during the match - si, solo emojis no se si quieren mas
 add friends - yes
 view my firends list - si
 remove a firend from my friends list - si

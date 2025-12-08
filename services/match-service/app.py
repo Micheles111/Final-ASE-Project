@@ -203,6 +203,7 @@ def handle_turn_change(state):
             finished = True
     else:
         state['turn'] = next_player
+        state['turn_start_time'] = datetime.datetime.utcnow().isoformat()
         
     return state, message, finished
 
@@ -224,7 +225,8 @@ def start_real_match(player1, player2):
         "deck": deck,
         "turn": player1,
         "status": "active",
-        "last_capture_by": None
+        "last_capture_by": None,
+        "turn_start_time": datetime.datetime.utcnow().isoformat()
     }
     r.setex(f"match:{match_id}", 7200, json.dumps(match_state))
     return match_id
