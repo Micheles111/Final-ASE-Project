@@ -12,7 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # HEALTHCHECK: Controlla se il DB è pronto
+    # HEALTHCHECK: Control if the DB is ready
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d escoba_db"]
       interval: 5s
@@ -25,7 +25,7 @@ services:
     image: redis:7
     ports:
       - "6379:6379"
-    # Redis parte subito, ma per sicurezza mettiamo un check anche qui
+    # Redis starts immediately, but to be safe we ​​put a check here too
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -64,7 +64,7 @@ services:
     restart: on-failure
     depends_on:
       postgres:
-        condition: service_healthy  # Aspetta che Postgres sia PRONTO
+        condition: service_healthy  # Wait for Postgres to be READY
     networks:
       - backend-network
 

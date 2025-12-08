@@ -22,7 +22,7 @@
     </div>
 
     <script>
-        // Polling per controllare se il match è stato trovato
+        // Polling the server for matchmaking status
         setInterval(async () => {
             try {
                 const response = await fetch('/api/proxy/matchmaking/status');
@@ -31,10 +31,10 @@
                 if (data.status === 'matched' && data.match_id) {
                     window.location.href = `/game/${data.match_id}`;
                 } else if (data.status === 'none') {
-                    // Se per qualche motivo siamo usciti dalla coda
+                    // If no longer searching, redirect to dashboard
                     window.location.href = '/dashboard';
                 }
-                // Se 'waiting', continua ad aspettare
+                // Else, keep waiting
             } catch (error) {
                 console.error("Polling error", error);
             }

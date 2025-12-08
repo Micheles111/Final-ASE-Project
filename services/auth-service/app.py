@@ -9,7 +9,7 @@ import re
 
 app = Flask(__name__)
 
-# --- Configurazione Database e Secret Key ---
+# --- Configuration for Database and Secret Key ---
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'DATABASE_URL', 'postgresql://admin:password123@postgres:5432/escoba_db'
 )

@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/test-endpoints.sh
 
-echo "🔍 Testing Service Health..."
+echo "Testing Service Health..."
 
 # Gateway (HTTPS)
 echo -n "API Gateway: "
@@ -23,4 +23,4 @@ echo -n "Player Service: "
 curl -k -s -o /dev/null -w "%{http_code}" https://localhost:5000/players/health
 echo " (Expected: 200)"
 
-echo "✅ Quick check complete."
+echo "Quick check complete."

@@ -85,8 +85,6 @@ def login():
 
 @app.route('/register', methods=['GET'])
 def register_page():
-    # Esta función simplemente renderiza el formulario de registro.
-    # El formulario hace POST a la función 'register' que ya existe.
     return render_template('register.html')
 
 @app.route('/register', methods=['POST'])
@@ -192,7 +190,7 @@ def leaderboard():
     players = resp.json() if resp and resp.status_code == 200 else []
     return render_template('leaderboard.html', user=session['username'], players=players)
 
-# --- FIX QUI: GESTIONE LISTA AMICI PER STORICO ---
+# --- FIX HISTORY & MATCH ANALYSIS ---
 @app.route('/match_history')
 def match_history_page():
     if 'token' not in session: return redirect(url_for('index'))
@@ -203,15 +201,15 @@ def match_history_page():
     friends_resp = api_request("GET", f"/friends/list/{session['username']}", token=session['token'])
     friends_data = friends_resp.json() if friends_resp and friends_resp.status_code == 200 else {}
     
-    # Costruiamo una lista completa di persone "già collegate"
-    # 1. Amici confermati (friends_data['friends'] è una lista di oggetti {username, online})
+    # Let's build a complete list of people "already online"
+    # 1. Confirmed friends (friends_data['friends'] is a list of {username, online} objects)
     confirmed_friends = [f['username'] for f in friends_data.get('friends', [])]
     
-    # 2. Richieste in sospeso (sono liste di stringhe)
+    #2. Pending requests (these are lists of strings)
     sent_requests = friends_data.get('pending_sent', [])
     received_requests = friends_data.get('pending_received', [])
     
-    # 3. Mettiamo tutto insieme + noi stessi
+    #3. Let's put it all together + ourselves
     all_contacts = confirmed_friends + sent_requests + received_requests + [session['username']]
     
     return render_template('history.html', user=session['username'], history=history, current_friends=all_contacts)
@@ -246,7 +244,7 @@ def create_match():
         if opponent == "CPU":
             return redirect(url_for('game', match_id=resp.json()['match_id']))
         elif opponent == "Guest":
-            # Partida Local necesita el parámetro 'local=1'
+            # Local game requires the parameter 'local=1'
             return redirect(url_for('game', match_id=resp.json()['match_id'], local=1)) 
         else:
             flash(f"Challenge sent to {opponent}! Waiting for acceptance.")
@@ -305,7 +303,7 @@ def game(match_id):
     friends_resp = api_request("GET", f"/friends/list/{session['username']}", token=session['token'])
     friends_data = friends_resp.json() if friends_resp and friends_resp.status_code == 200 else {}
     
-    # Anche qui, usiamo la lista completa per nascondere il bottone
+    # Here too, we use the full list to hide the buttons correctly
     confirmed = [f['username'] for f in friends_data.get('friends', [])]
     sent = friends_data.get('pending_sent', [])
     received = friends_data.get('pending_received', [])
@@ -433,7 +431,6 @@ def admin_login():
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
-# En services/frontend/app.py, dentro de la función admin_dashboard:
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -441,7 +438,7 @@ def admin_dashboard():
         return redirect(url_for('admin_login'))
     
     service_status = {}
-    # Servicios clave para verificar su estado
+    # Key services to check your status
     for service_key, endpoint in [
         ('Auth', '/auth/health'),
         ('Player', '/players/health'),
@@ -457,7 +454,7 @@ def admin_dashboard():
         else:
             service_status[service_key] = " Unhealthy/Down"
 
-    # Código existente para obtener datos
+    # Existing code to fetch data
     users_resp = api_request("GET", "/auth/users")
     users = users_resp.json() if users_resp and users_resp.status_code == 200 else []
     
