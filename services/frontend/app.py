@@ -7,7 +7,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 app = Flask(__name__)
 app.secret_key = 'frontend_secret_key'
 
-API_GATEWAY = "http://api-gateway:5000"
+API_GATEWAY = "https://api-gateway:5000"
 
 # --- HELPERS ---
 
