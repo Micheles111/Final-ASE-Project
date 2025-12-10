@@ -13,12 +13,58 @@
         .rules-section ul { list-style-type: disc; margin-left: 20px; }
         .rules-section li { margin-bottom: 8px; }
 
+        /* Card grid style */
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px; }
-        .card-item { text-align: center; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fff; transition: transform 0.2s; }
+        .card-item { 
+            text-align: center; border: 1px solid #ddd; padding: 10px; border-radius: 8px; 
+            background: #fff; transition: transform 0.2s; 
+            cursor: pointer;
+        }
         .card-item:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .card-item img { width: 100px; height: 152px; object-fit: cover; border-radius: 5px; margin-bottom: 5px; }
         .card-name { font-weight: bold; font-size: 0.9rem; color: #555; }
         .card-value { font-size: 0.8rem; color: #888; }
+        
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; 
+            padding: 30px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 450px; 
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 36px;
+            font-weight: bold;
+            line-height: 1;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -54,18 +100,97 @@
         </div>
 
         <h2>🃏 Card Collection</h2>
-        <p>Here are all the cards in the deck with their game values.</p>
+        <p>Here are all the cards in the deck with their game values. Click on a card for more details.</p>
         
         <div class="cards-grid">
             {% for card in cards %}
-            <div class="card-item">
+            <div class="card-item" 
+                 onclick="openModal('{{ card.name }}', 
+                            '{{ card.image_file }}', 
+                            '{{ card.game_value }}',
+                            '{{ card.number }}',
+                            '{{ card.suit }}')">
                 <img src="{{ url_for('static', filename='cards/' + card.image_file) }}" alt="{{ card.name }}" 
-                     onerror="this.src='{{ url_for('static' filename='cards/back.png') }}'">
+                     onerror="this.src='{{ url_for('static', filename='cards/back.png') }}'">
                 <div class="card-name">{{ card.name }}</div>
                 <div class="card-value">Value: {{ card.game_value }}</div>
             </div>
             {% endfor %}
         </div>
     </div>
-</body>
+
+    <div id="card-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2><span id="modal-card-name"></span></h2>
+            <img id="modal-card-image" style="width: 150px; height: auto; border-radius: 8px; margin-bottom: 20px;">
+            <p style="font-size: 1.1rem;">Value for Escoba: <span id="modal-game-value" style="color: #007bff;"></span></p>
+            <hr style="width: 50%; margin: 15px auto;">
+            <p id="modal-card-details" style="text-align: left; padding: 0 10%; line-height: 1.6;"></p>
+        </div>
+    </div>
+    <script>
+        // Function to generate a dynamic description of the card
+        function getCardDescription(number, suit) {
+            let desc = `This is the number ${number} card of the ${suit} suit. `;
+            
+            if (suit === 'Oros') {
+                desc += "This suit is traditionally associated with money and fortune. ";
+            } else if (suit === 'Copas') {
+                desc += "The Cups suit symbolizes emotions, love, and celebrations. ";
+            } else if (suit === 'Espadas') {
+                desc += "Swords represent challenges, conflicts, or important decisions. ";
+            } else if (suit === 'Bastos') {
+                desc += "Clubs are linked to work, nature, and action. ";
+            }
+            
+            const num = parseInt(number);
+            
+            if (num === 1) {
+                desc += "It is the Ace (value 1), the lowest value card for the sum, but important for end-game scoring.";
+            } else if (num === 10) {
+                desc += "It is the Jack (Sota, value 8). This is one of the face cards.";
+            } else if (num === 11) {
+                desc += "It is the Knight (Caballo, value 9). This is one of the face cards.";
+            } else if (num === 12) {
+                desc += "It is the King (Rey, value 10), the highest value figure for the sum of 15.";
+            } else if (num === 7 && suit === 'Oros') {
+                desc += "It's the Seven of Gold (Settebello)! It grants an extra point at the end of the game.";
+            }
+            return desc.trim();
+        }
+
+        // Function to open the modal with card data
+        function openModal(name, imageFile, gameValue, number, suit) {
+            const modal = document.getElementById('card-modal');
+            const img = document.getElementById('modal-card-image');
+            const nameEl = document.getElementById('modal-card-name');
+            const valueEl = document.getElementById('modal-game-value');
+            const detailsEl = document.getElementById('modal-card-details');
+
+            // Update content
+            nameEl.textContent = name;
+            img.src = `/static/cards/${imageFile}`; 
+            valueEl.textContent = gameValue;
+            
+            detailsEl.textContent = getCardDescription(number, suit);
+
+            // Show modal
+            modal.style.display = 'block';
+
+            // Close modal when clicking outside of it (on the dark layer)
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    closeModal();
+                }
+            }
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            document.getElementById('card-modal').style.display = 'none';
+            window.onclick = null; // Remove event listener to prevent interference
+        }
+    </script>
+    </body>
 </html>

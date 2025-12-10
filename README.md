@@ -16,7 +16,7 @@ login into the game - Si
 check/modify my profile - Si
 be safe about my account data - Creo que si
 see the overall card collection - Si
-view the details of a card - 1. Si pero quiero perfeccionarlo hacinedo una pagina por cada carta puede ser una option o un añadido para meterle algo de nuevo texto
+view the details of a card - 1. Si, check if they like it
 start a new game - Si
 select the subset of cards - Si
 select a card - Si
