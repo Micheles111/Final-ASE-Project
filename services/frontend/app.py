@@ -5,7 +5,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 app = Flask(__name__)
-app.secret_key = 'frontend_secret_key'
+app.secret_key = os.environ.get('FRONTEND_SECRET_KEY', 'default_fallback_key')
 
 API_GATEWAY = "https://api-gateway:5000"
 
@@ -430,9 +430,11 @@ def admin_redirect():
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
+        ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+        ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin123!')
         username = request.form.get('username')
         password = request.form.get('password')
-        if username == 'admin' and password == 'Admin123!':
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:

@@ -120,6 +120,10 @@ services:
     build: ./services/frontend
     ports:
       - "8080:5000"
+    environment:
+      FRONTEND_SECRET_KEY: frontend_key_123
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: Admin123!
     volumes:
       - ./certs:/app/certs:ro
     restart: on-failure
