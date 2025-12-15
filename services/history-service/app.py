@@ -106,4 +106,4 @@ def get_match_details(match_id):
     return jsonify(match.to_full_dict()), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)

@@ -117,7 +117,7 @@ def finalize_match(state, surrender_winner=None):
             "score": final_scores,
             "log": score_details
         }
-        requests.post(HISTORY_SERVICE_URL, json=history_payload, timeout=2, verify=False)
+        requests.post(HISTORY_SERVICE_URL, json=history_payload, timeout=2, verify='/app/certs/cert.pem')
     except Exception as e:
         print(f"Error contacting History Service: {e}")
 
@@ -127,7 +127,7 @@ def finalize_match(state, surrender_winner=None):
             is_winner = (p == winner)
             points = final_scores.get(p, 0)
             stats_payload = {"won": is_winner, "score_delta": points}
-            requests.put(f"{PLAYER_SERVICE_URL}/{p}/stats", json=stats_payload, timeout=2, verify=False)
+            requests.put(f"{PLAYER_SERVICE_URL}/{p}/stats", json=stats_payload, timeout=2, verify='/app/certs/cert.pem')
         except Exception as e:
             print(f"Error contacting Player Service for {p}: {e}")
 
@@ -498,4 +498,4 @@ def post_reaction(match_id):
     return jsonify({"message": "Reaction posted"}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
