@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import requests
 import os
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import requests
+from requests.exceptions import RequestException, JSONDecodeError
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 app = Flask(__name__)
@@ -79,7 +80,15 @@ def login():
         error_msg = "Login failed."
         try:
             error_msg = resp.json().get('error', 'Login failed.')
-        except: pass
+        
+        except JSONDecodeError:
+            error_msg = "Error decoding API response."
+        except RequestException as e:
+            error_msg = f"Network error communicating with API: {e}"
+        except Exception: 
+            error_msg = "An unexpected error occurred."
+            app.logger.error("Blind exception caught in login")
+        
         flash(f"{error_msg} if you dont have an account, ¡LOGIN NOW!")
         return redirect(url_for('index'))
 
@@ -105,7 +114,12 @@ def register():
         error_msg = "Registration failed."
         try:
             error_msg = auth_resp.json().get('error', "Registration failed.")
-        except: pass
+
+        except (RequestException, JSONDecodeError) as e:
+            error_msg = "Error de comunicación con el servicio de autenticación."
+        except Exception:
+            error_msg = "Ocurrió un error inesperado."
+
         flash(error_msg)
         
     return redirect(url_for('index'))
@@ -179,7 +193,12 @@ def update_profile():
     else:
         error_msg = "Update failed."
         try: error_msg = resp.json().get('error', 'Update failed.')
-        except: pass
+        
+        except (RequestException, JSONDecodeError) as e:
+            error_msg = "Error de comunicación con el servicio al actualizar el perfil."        
+        except Exception:
+            error_msg = "Ocurrió un error inesperado al actualizar el perfil."
+
         flash(error_msg)
     return redirect(url_for('profile'))
 
