@@ -61,12 +61,12 @@ A **La Escoba** card game platform (classic Spanish card game) with **microservi
 ## Overview
 
 **La Escoba** is a traditional Spanish card game for 2-4 players. In this version:
-- ♠️ Played with a Spanish deck (40 cards: 4 suits, values 1-7, jack, knight, king)
-- 🎮 Support for playing against CPU, local (Guest), or against other players
-- 👥 Friend system and challenges between players
-- 📊 Global leaderboard and personal statistics
-- 🔐 Secure authentication with JWT and encrypted passwords
-- ⚡ Scalable microservices architecture
+- Played with a Spanish deck (40 cards: 4 suits, values 1-7, jack, knight, king)
+- Support for playing against CPU, local (Guest), or against other players
+- Friend system and challenges between players
+- Global leaderboard and personal statistics
+- Secure authentication with JWT and encrypted passwords
+- Scalable microservices architecture
 
 ## Architecture
 
@@ -104,7 +104,7 @@ The project uses a **microservices architecture** with the following components:
 
 ### Installation and Execution
 
-\`\`\`bash
+```bash
 # Clone the repository
 git clone <repo-url>
 cd FinalASEProject1
@@ -115,7 +115,7 @@ docker-compose up --build
 # The application will be available at:
 # - Frontend: http://localhost:8080
 # - API Gateway: https://localhost:5000
-\`\`\`
+```
 
 ### Environment Variables
 
@@ -133,7 +133,7 @@ Access at: http://localhost:8080/admin
 
 ## Directory Structure
 
-\`\`\`
+```
 FinalASEProject1/
 ├── services/
 │   ├── api-gateway/           # Central proxy (Flask)
@@ -153,7 +153,7 @@ FinalASEProject1/
 ├── tests/                      # Tests and performance (Locust, Postman)
 ├── docker-compose.yml         # Container configuration
 └── package.json               # (Frontend Next.js - optional)
-\`\`\`
+```
 
 ## Key Concepts of La Escoba
 
@@ -242,7 +242,7 @@ See complete specification in `/docs/openapi/openapi.yaml`
 ## Development
 
 ### Running Services Locally (without Docker)
-\`\`\`bash
+```bash
 # Terminal 1: PostgreSQL
 docker run -e POSTGRES_PASSWORD=password123 -p 5432:5432 postgres:15
 
@@ -253,22 +253,22 @@ docker run -p 6379:6379 redis:7
 cd services/auth-service
 pip install -r requirements.txt
 python app.py
-\`\`\`
+```
 
 ### Testing
-\`\`\`bash
+```bash
 # Load testing with Locust
 cd tests/locust
 locust -f locustfile.py --host=https://localhost:5000
 
 # Postman collection available in tests/postman/
-\`\`\`
+```
 
 ### Generate SSL Certificates (if needed)
-\`\`\`bash
+```bash
 cd certs
 openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-\`\`\`
+```
 
 ## Project Statistics
 
@@ -309,3 +309,5 @@ openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 36
 - Michele F. P. Sagone (@student.unipi.it)
 
 ---
+
+Here add the case of use and why yes or nt implemetet
