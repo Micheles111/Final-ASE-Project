@@ -253,5 +253,3 @@ openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 36
 - Michele F. P. Sagone (@student.unipi.it)
 
 ---
-
-Here add the case of use and why yes or nt implemetet

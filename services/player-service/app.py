@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
+debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 # Configuration DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
@@ -210,5 +211,5 @@ def remove_friend():
         
     return jsonify({"error": "Friendship not found"}), 404
 
-#if __name__ == '__main__':
-#    app.run(debug=False, host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

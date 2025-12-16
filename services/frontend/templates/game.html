@@ -218,7 +218,7 @@
                     
                     // If the reaction is new, display it
                     lastReactionTimestamp = reaction.timestamp; 
-                    displayReaction(reaction.player, reaction.content);
+                    displayReaction(playerWhoReacted, emoji);
                 }
 
                 if(data.status === 'finished') {
@@ -236,7 +236,7 @@
                     document.getElementById('surrender-form').style.display = 'none';
                     document.getElementById('pass-device-overlay').style.display = 'none';
 
-                    // MOSTRA AZIONI FINE PARTITA
+                    // Show end game actions
                     const oppName = Object.keys(data.players).find(p => p !== currentUser);
                     document.getElementById('end-game-actions').style.display = 'flex';
                     
@@ -248,6 +248,9 @@
                         document.getElementById('friend-input').value = oppName;
                         document.getElementById('friend-form').style.display = 'block';
                     }
+                    setTimeout(() => {
+                        window.location.href = "/dashboard";
+                    }, 1000);
 
                     return;
                 }
@@ -404,46 +407,62 @@
         // Function for sending reactions to the server
         async function sendReaction(emoji) {
             const playerToSend = isLocal ? currentVisualPlayer : currentUser;
+            
             try {
                 const response = await fetch(`/api/proxy/match/${matchId}/react`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ player: playerToSend, reaction: emoji })
+                    body: JSON.stringify({ 
+                        player: playerToSend, 
+                        reaction: emoji 
+                    })
                 });
+                
                 if (response.ok) {
-                    // Show the reaction immediately
+                    // Esto muestra el emoji localmente al instante para dar feedback
                     displayReaction(playerToSend, emoji);
                 } else {
-                    const result = await response.json();
-                    console.error("Error sending reaction:", result.error);
+                    console.error("Error en el servidor al enviar reacción");
                 }
             } catch (error) {
-                console.error("Error sending reaction:", error);
+                console.error("Error de red al enviar reacción:", error);
             }
-        }
+        } 
 
-        // Function to display reactions on the screen
         function displayReaction(player, reactionContent) {
-            // Determine if the reaction is from the current player or opponent
+            // Determinar si la reacción es del jugador actual o del oponente
+            // currentUser es la variable global definida al principio del script
             const isMe = (player === currentVisualPlayer); 
             const displayEl = isMe ? document.getElementById('my-reaction') : document.getElementById('opp-reaction');
             
-            // Show the reaction
+            if (!displayEl) return;
+
+            // 1. Resetear estado por si había una animación previa
+            displayEl.style.transition = 'none';
+            displayEl.style.opacity = '0';
             displayEl.innerText = reactionContent;
-            displayEl.style.opacity = '1';
-            displayEl.style.transform = isMe ? 'translate(-50%, -20px)' : 'translate(-50%, 20px)';
             
-            // Hide the reaction after 3 seconds
+            // 2. Forzar un pequeño reflow para que el navegador note el reset
+            displayEl.offsetHeight; 
+
+            // 3. Aplicar la animación
+            displayEl.style.transition = 'opacity 0.5s, transform 0.5s';
+            displayEl.style.opacity = '1';
+            
+            // Movimiento hacia arriba si soy yo, hacia abajo si es el oponente
+            const moveY = isMe ? '-40px' : '40px';
+            displayEl.style.transform = `translateX(-50%) translateY(${moveY})`;
+            
+            // 4. Desvanecer después de 3 segundos
             setTimeout(() => {
                 displayEl.style.opacity = '0';
-                displayEl.style.transform = isMe ? 'translate(-50%, 0)' : 'translate(-50%, 0)';
+                displayEl.style.transform = 'translateX(-50%) translateY(0)';
             }, 3000);
         }
 
+        // Function to start the turn timer
         function startTimer(startTimeString) {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
+            if (timerInterval) clearInterval(timerInterval);
             
             const timerDiv = document.getElementById('turn-timer');
             const timerValueSpan = document.getElementById('timer-value');
@@ -455,32 +474,29 @@
 
             timerDiv.style.display = 'block';
             
-            // Parse the start time 
-            turnStartTime = new Date(startTimeString);
+            // Forzar que la cadena se interprete como UTC añadiendo una 'Z' si no la tiene
+            let isoString = startTimeString;
+            if (!isoString.endsWith('Z')) isoString += 'Z';
+            turnStartTime = new Date(isoString);
 
             function updateTimerDisplay() {
-                const now = new Date();
-                const elapsedMilliseconds = now - turnStartTime;
-                const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+                const now = new Date(); // Esto da la hora actual en local
+                // Convertimos 'now' a milisegundos UTC para la comparacion
+                const nowUTC = now.getTime() + (now.getTimezoneOffset() * 60000);
+                // O más simple, usar el valor absoluto de la resta si los objetos Date están bien formados:
+                const elapsedMilliseconds = Math.abs(now - turnStartTime);
                 
-                // Calculate remaining seconds for the countdown
-                let remainingSeconds = MAX_TURN_TIME_SECONDS - elapsedSeconds;
+                const totalSeconds = Math.floor(elapsedMilliseconds / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
 
-                if (remainingSeconds <= 0) {
-                    remainingSeconds = 0;
-                    // Stop the timer when it reaches zero
-                    stopTimer(); 
-                    // In a real game, you would submit a default move or surrender here.
-                }
+                // Si el desfase sigue ocurriendo, forzamos a que solo muestre minutos menores a 60
+                const minutesDisplay = minutes % 60; 
 
-                const minutes = Math.floor(remainingSeconds / 60);
-                const seconds = remainingSeconds % 60;
-
-                const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                const formattedTime = `${String(minutesDisplay).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 timerValueSpan.innerText = formattedTime;
             }
 
-            // Update immediately and then every second
             updateTimerDisplay();
             timerInterval = setInterval(updateTimerDisplay, 1000); 
         }
@@ -492,6 +508,7 @@
                 timerInterval = null;
             }
             document.getElementById('turn-timer').style.display = 'none';
+            document.getElementById('timer-value').innerText = '00:00';
         }
 
         setInterval(updateGameState, 2000);

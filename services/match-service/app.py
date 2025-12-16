@@ -13,6 +13,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import datetime
 
 app = Flask(__name__)
+debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 redis_host = os.environ.get('REDIS_HOST', 'redis')
 r = redis.Redis(host=redis_host, port=6379, db=0, decode_responses=True)
@@ -497,5 +498,5 @@ def post_reaction(match_id):
     
     return jsonify({"message": "Reaction posted"}), 200
 
-#if __name__ == '__main__':
-#    app.run(debug=False, host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

@@ -5,6 +5,7 @@ import os
 import json
 
 app = Flask(__name__)
+debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 # Configuration database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
@@ -105,5 +106,5 @@ def get_match_details(match_id):
     
     return jsonify(match.to_full_dict()), 200
 
-#if __name__ == '__main__':
-#    app.run(debug=False, host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

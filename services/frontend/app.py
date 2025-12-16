@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import requests
 import os
-from urllib3.exceptions import InsecureRequestWarning 
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FRONTEND_SECRET_KEY', 'default_fallback_key')
+app.secret_key = 'frontend_secret_key'
+debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 API_GATEWAY = "https://api-gateway:5000"
 
@@ -79,15 +80,7 @@ def login():
         error_msg = "Login failed."
         try:
             error_msg = resp.json().get('error', 'Login failed.')
-        
-        except JSONDecodeError:
-            error_msg = "Error decoding API response."
-        except RequestException as e:
-            error_msg = f"Network error communicating with API: {e}"
-        except Exception: 
-            error_msg = "An unexpected error occurred."
-            app.logger.error("Blind exception caught in login")
-        
+        except: pass
         flash(f"{error_msg} if you dont have an account, ¡LOGIN NOW!")
         return redirect(url_for('index'))
 
@@ -113,12 +106,7 @@ def register():
         error_msg = "Registration failed."
         try:
             error_msg = auth_resp.json().get('error', "Registration failed.")
-
-        except (RequestException, JSONDecodeError) as e:
-            error_msg = "Error de comunicación con el servicio de autenticación."
-        except Exception:
-            error_msg = "Ocurrió un error inesperado."
-
+        except: pass
         flash(error_msg)
         
     return redirect(url_for('index'))
@@ -192,12 +180,7 @@ def update_profile():
     else:
         error_msg = "Update failed."
         try: error_msg = resp.json().get('error', 'Update failed.')
-        
-        except (RequestException, JSONDecodeError) as e:
-            error_msg = "Error de comunicación con el servicio al actualizar el perfil."        
-        except Exception:
-            error_msg = "Ocurrió un error inesperado al actualizar el perfil."
-
+        except: pass
         flash(error_msg)
     return redirect(url_for('profile'))
 
@@ -352,6 +335,14 @@ def proxy_play(match_id):
     resp = api_request("POST", f"/matches/{match_id}/play", data=data, token=session['token'])
     return resp.json(), resp.status_code
 
+@app.route('/api/proxy/match/<match_id>/react', methods=['POST'])
+def proxy_react(match_id):
+    if 'token' not in session: return {"error": "Unauthorized"}, 401
+    data = request.get_json()
+    # Enviamos la reacción al API Gateway para que llegue al match-service
+    resp = api_request("POST", f"/matches/{match_id}/react", data=data, token=session['token'])
+    return resp.json(), resp.status_code
+
 @app.route('/matchmaking/join', methods=['POST'])
 def matchmaking_join():
     if 'token' not in session: return redirect(url_for('index'))
@@ -374,18 +365,6 @@ def matchmaking_waiting():
 def proxy_matchmaking_status():
     if 'token' not in session: return {"error": "Unauthorized"}, 401
     resp = api_request("GET", f"/matchmaking/status/{session['username']}", token=session['token'])
-    return resp.json(), resp.status_code
-
-
-@app.route('/api/proxy/match/<match_id>/react', methods=['POST'])
-def proxy_post_reaction(match_id):
-    if 'token' not in session: return {"error": "Unauthorized"}, 401
-    data = request.get_json()
-    
-    # Forward the request to the Match Service (via API Gateway)
-    # The API Gateway already handles the /matches/<match_id>/react endpoint (implicitly routed by /matches/<path:path>)
-    resp = api_request("POST", f"/matches/{match_id}/react", data=data, token=session['token'])
-    
     return resp.json(), resp.status_code
 
 @app.route('/matchmaking/cancel', methods=['POST'])
@@ -448,11 +427,9 @@ def admin_redirect():
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
-        ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin123!')
         username = request.form.get('username')
         password = request.form.get('password')
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        if username == 'admin' and password == 'Admin123!':
             session['admin_logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:
@@ -505,5 +482,5 @@ def admin_dashboard():
                            cards=cards,
                            service_status=service_status)
     
-#if __name__ == '__main__':
-#    app.run(debug=False, host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

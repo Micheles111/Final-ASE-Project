@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: escoba_db
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # HEALTHCHECK: Control if the DB is ready
@@ -21,6 +23,8 @@ services:
 
   redis:
     image: redis:7
+    ports:
+      - "6379:6379"
     # Redis starts immediately, but to be safe we ​​put a check here too
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -120,10 +124,6 @@ services:
     build: ./services/frontend
     ports:
       - "8080:5000"
-    environment:
-      FRONTEND_SECRET_KEY: frontend_key_123
-      ADMIN_USERNAME: admin
-      ADMIN_PASSWORD: Admin123!
     volumes:
       - ./certs:/app/certs:ro
     restart: on-failure
@@ -131,8 +131,7 @@ services:
       - api-gateway
     networks:
       - backend-network
-    command: gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 app:app
-    
+
 networks:
   backend-network:
     driver: bridge
