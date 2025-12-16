@@ -250,6 +250,6 @@ openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 36
 **Members**:
 - Elena Martínez Vazquez (e.martinezvazquez@student.unipi.it)
 - Mario Perez Perez (@student.unipi.it)
-- Michele F. P. Sagone (@student.unipi.it)
+- Michele F. P. Sagone (m.sagone1@studenti.unipi.it)
 
 ---
