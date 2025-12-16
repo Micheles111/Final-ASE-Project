@@ -38,7 +38,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"test_user_{{$randomInt}}\",\n    \"email\": \"test_{{$randomInt}}@example.com\",\n    \"password\": \"securePass123\"\n}"
+							"raw": "{\n    \"username\": \"test_user_{{$randomInt}}\",\n    \"email\": \"test_{{$randomInt}}@example.com\",\n    \"password\": \"securePass123!\"\n}"
 						},
 						"url": {
 							"raw": "https://localhost:5000/auth/register",
