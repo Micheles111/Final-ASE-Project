@@ -6,11 +6,10 @@ import random
 import os
 import itertools
 import requests
+import datetime
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-import datetime
 
 app = Flask(__name__)
 debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
@@ -23,9 +22,10 @@ PLAYER_SERVICE_URL = "https://player-service:5000/players"
 
 MATCHMAKING_QUEUE_KEY = "matchmaking_queue"
 
+# Per comunicazioni interne sicure (se necessario validare i cert)
 CERT_FILE = '/app/certs/cert.pem'
 
-# --- UTILS CARTS ---
+# --- UTILS CARTE ---
 def get_initial_deck():
     return list(range(1, 41))
 
@@ -120,7 +120,7 @@ def finalize_match(state, surrender_winner=None):
             "score": final_scores,
             "log": score_details
         }
-        requests.post(HISTORY_SERVICE_URL, json=history_payload, timeout=2, verify=CERT_FILE)
+        requests.post(HISTORY_SERVICE_URL, json=history_payload, timeout=2, verify=False)
     except Exception as e:
         print(f"Error contacting History Service: {e}")
 
@@ -130,7 +130,7 @@ def finalize_match(state, surrender_winner=None):
             is_winner = (p == winner)
             points = final_scores.get(p, 0)
             stats_payload = {"won": is_winner, "score_delta": points}
-            requests.put(f"{PLAYER_SERVICE_URL}/{p}/stats", json=stats_payload, timeout=2, verify=CERT_FILE)
+            requests.put(f"{PLAYER_SERVICE_URL}/{p}/stats", json=stats_payload, timeout=2, verify=False)
         except Exception as e:
             print(f"Error contacting Player Service for {p}: {e}")
 
@@ -311,27 +311,7 @@ def accept_invite(match_id):
     r.delete(f"match:{match_id}")
     new_match_id = start_real_match(state['player1'], state['player2'])
     
-    deck = get_initial_deck()
-    random.shuffle(deck)
-    p1_hand = [deck.pop() for _ in range(3)]
-    p2_hand = [deck.pop() for _ in range(3)]
-    table = [deck.pop() for _ in range(4)]
-
-    match_state = {
-        "match_id": match_id,
-        "players": {
-            state['player1']: {"hand": p1_hand, "captured": [], "score_events": []},
-            state['player2']: {"hand": p2_hand, "captured": [], "score_events": []}
-        },
-        "table": table,
-        "deck": deck,
-        "turn": state['player1'],
-        "status": "active",
-        "last_capture_by": None
-    }
-    r.setex(f"match:{match_id}", 7200, json.dumps(match_state))
-    
-    return jsonify({"match_id": match_id, "message": "Match accepted"}), 200
+    return jsonify({"match_id": new_match_id, "message": "Match accepted"}), 200
 
 @app.route('/invites/<match_id>/reject', methods=['POST'])
 def reject_invite(match_id):
@@ -382,6 +362,12 @@ def create_match():
     data = request.get_json()
     player1 = data.get('player1')
     player2 = data.get('player2')
+    
+    # --- FIX VALIDAZIONE ---
+    if not player1 or not player2:
+        return jsonify({"error": "Two players required"}), 400
+    # -----------------------
+
     match_id = start_real_match(player1, player2)
     return jsonify({"match_id": match_id, "message": "Match created", "turn": player1}), 201
 
@@ -396,8 +382,7 @@ def get_match(match_id):
     requesting_player = request.args.get('player')
     players = state['players']
     
-    # IF IT'S GUEST (LOCAL), WE DON'T HIDE ANYTHING
-    # The backend sends everything, the frontend decides what to show
+    # Se è partita locale (Guest), NON nascondere le carte
     is_local_game = "Guest" in players
     
     if not requesting_player and not is_local_game: return jsonify(state), 200
@@ -422,82 +407,108 @@ def play_card(match_id):
     data = request.get_json()
     player = data.get('player')
     card_id = data.get('card_id')
-    state_json = r.get(f"match:{match_id}")
-    if not state_json: return jsonify({"error": "Match not found"}), 404
-    state = json.loads(state_json)
-    if state['status'] != 'active': return jsonify({"error": "Match finished/pending"}), 400
-    if state['turn'] != player: return jsonify({"error": "Not your turn"}), 400
-    if card_id not in state['players'][player]['hand']: return jsonify({"error": "Card not in hand"}), 400
+    
+    match_key = f"match:{match_id}"
+    
+    # TRANSAZIONE REDIS PER EVITARE RACE CONDITIONS
+    with r.pipeline() as pipe:
+        while True:
+            try:
+                pipe.watch(match_key)
+                state_json = pipe.get(match_key)
+                
+                if not state_json:
+                    return jsonify({"error": "Match not found"}), 404
+                
+                state = json.loads(state_json)
+                
+                if state['status'] != 'active': return jsonify({"error": "Match finished/pending"}), 400
+                if state['turn'] != player: return jsonify({"error": "Not your turn"}), 400
+                if card_id not in state['players'][player]['hand']: return jsonify({"error": "Card not in hand"}), 400
 
-    captured_cards = find_capture_combination(card_id, state['table'])
-    escoba = False
-    state['players'][player]['hand'].remove(card_id)
-    if captured_cards:
-        for c in captured_cards: state['table'].remove(c)
-        state['players'][player]['captured'].extend(captured_cards + [card_id])
-        state['last_capture_by'] = player
-        if not state['table']:
-            escoba = True
-            state['players'][player]['score_events'].append("ESCOBA")
-    else:
-        state['table'].append(card_id)
+                captured_cards = find_capture_combination(card_id, state['table'])
+                escoba = False
+                state['players'][player]['hand'].remove(card_id)
+                
+                if captured_cards:
+                    for c in captured_cards: state['table'].remove(c)
+                    state['players'][player]['captured'].extend(captured_cards + [card_id])
+                    state['last_capture_by'] = player
+                    if not state['table']:
+                        escoba = True
+                        state['players'][player]['score_events'].append("ESCOBA")
+                else:
+                    state['table'].append(card_id)
 
-    state, message, finished = handle_turn_change(state)
-    if not finished and state['turn'] == "CPU":
-        state = execute_cpu_turn(state)
-        state, cpu_msg, finished = handle_turn_change(state)
-        message = "CPU played. Your turn."
+                state, message, finished = handle_turn_change(state)
+                
+                if not finished and state['turn'] == "CPU":
+                    state = execute_cpu_turn(state)
+                    state, cpu_msg, finished = handle_turn_change(state)
+                    message = "CPU played. Your turn."
 
-    r.setex(f"match:{match_id}", 7200, json.dumps(state))
-    response = {
-        "message": message, 
-        "captured": captured_cards,
-        "escoba": escoba,
-        "state_snapshot": {"table": state['table'], "your_hand": state['players'][player]['hand']}
-    }
-    if state['status'] == 'finished':
-        response['final_result'] = state['result']
-    return jsonify(response), 200
+                pipe.multi()
+                pipe.setex(match_key, 7200, json.dumps(state))
+                pipe.execute()
+                
+                response = {
+                    "message": message, 
+                    "captured": captured_cards,
+                    "escoba": escoba,
+                    "state_snapshot": {"table": state['table'], "your_hand": state['players'][player]['hand']}
+                }
+                if state['status'] == 'finished':
+                    response['final_result'] = state['result']
+                return jsonify(response), 200
+                
+            except redis.WatchError:
+                continue
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
 
 @app.route('/matches/<match_id>/surrender', methods=['POST'])
 def surrender_match(match_id):
     data = request.get_json()
     player_surrendering = data.get('player')
-    state_json = r.get(f"match:{match_id}")
+    match_key = f"match:{match_id}"
+    
+    state_json = r.get(match_key)
     if not state_json: return jsonify({"error": "Match not found"}), 404
     state = json.loads(state_json)
+    
     if state['status'] != 'active': return jsonify({"error": "Match finished"}), 400
+    
     players = list(state['players'].keys())
     winner = players[1] if players[0] == player_surrendering else players[0]
+    
     final_result = finalize_match(state, surrender_winner=winner)
     state['status'] = 'finished'
     state['result'] = final_result
-    r.setex(f"match:{match_id}", 7200, json.dumps(state))
+    
+    r.setex(match_key, 7200, json.dumps(state))
     return jsonify({"message": "Match surrendered", "winner": winner}), 200
 
-# services/match-service/app.py
 @app.route('/matches/<match_id>/react', methods=['POST'])
 def post_reaction(match_id):
     data = request.get_json()
     player = data.get('player')
     reaction = data.get('reaction')
+    match_key = f"match:{match_id}"
     
-    state_json = r.get(f"match:{match_id}")
+    state_json = r.get(match_key)
     if not state_json: return jsonify({"error": "Match not found"}), 404
     state = json.loads(state_json)
     
     if state['status'] != 'active': return jsonify({"error": "Match finished/pending"}), 400
     if player not in state['players']: return jsonify({"error": "Player not in this match"}), 403
     
-    # Store the reaction in the match state
     state['last_reaction'] = {
         "player": player,
         "content": reaction,
         "timestamp": datetime.datetime.utcnow().isoformat()
     }
     
-    r.setex(f"match:{match_id}", 7200, json.dumps(state))
-    
+    r.setex(match_key, 7200, json.dumps(state))
     return jsonify({"message": "Reaction posted"}), 200
 
 if __name__ == '__main__':
