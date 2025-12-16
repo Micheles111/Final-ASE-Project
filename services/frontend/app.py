@@ -6,8 +6,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'frontend_secret_key')
-ASMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin123!')
+app.secret_key = 'frontend_secret_key'
 debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 API_GATEWAY = "https://api-gateway:5000"
@@ -438,7 +437,7 @@ def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        if username == 'admin' and password == ASMIN_PASSWORD:
+        if username == 'admin' and password == 'Admin123!':
             session['admin_logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:

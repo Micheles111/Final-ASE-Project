@@ -18,6 +18,13 @@ SERVICES = {
     "history": "https://history-service:5000"
 }
 
+@app.route('/')
+def index():
+    return jsonify({
+        "message": "API Gateway is up and running",
+        "endpoints": ["/health", "/auth", "/player", "/matches", "/history"]
+    }), 200
+
 @app.route('/health', methods=['GET'])
 def gateway_health():
     return jsonify({"status": "gateway running (secure)"}), 200
