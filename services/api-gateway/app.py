@@ -69,10 +69,11 @@ def proxy_auth(path):
 def proxy_cards(path):
     return forward_request("cards", "cards", path)
 
-@app.route('/players', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE'])
 @app.route('/players/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def proxy_players(path):
-    return forward_request("player", "players", path)
+    # Cambia el segundo argumento de "players" a "" si el microservicio 
+    # ya escucha directamente en la raíz para los usuarios.
+    return forward_request("player", "", path)
 
 @app.route('/matches', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE'])
 @app.route('/matches/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])

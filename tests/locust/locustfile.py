@@ -1,47 +1,48 @@
 from locust import HttpUser, task, between
 import uuid
 import random
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import time # Added for time.sleep
+import os
+# Esto hace que la librería de Python ignore la verificación de SSL
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 class EscobaPlayer(HttpUser):
-    # Waiting time between one action and another (simulates human thinking)
     wait_time = between(1, 3)
     
     def on_start(self):
-        """
-        Executed when a virtual user "spawns".
-        It registers and logs in to get the token.
-        """
+        # 1. Ignorar verificación SSL para certificados auto-firmados
+        self.client.verify = False 
+        
+        # 2. Datos del usuario (CON MAYÚSCULA EN LA CONTRASEÑA)
         self.username = f"player_{str(uuid.uuid4())[:8]}"
-        self.password = "password123"
+        self.password = "Password123!" # <-- CAMBIADO: Añadida mayúscula
         self.email = f"{self.username}@test.com"
         self.token = None
-        self.user_id = None # Initialize user_id
 
-        # 1. Registration
+        # Registro
         with self.client.post("/auth/register", json={
             "username": self.username,
             "password": self.password,
             "email": self.email
-        }, catch_response=True, name="/auth/register [register/ignore_conflict]") as response:
-            if response.status_code == 409:
-                response.success() # Ignore error if it already exists (in repeated tests)
-            elif response.status_code != 201:
+        }, catch_response=True, name="/auth/register") as response:
+            if response.status_code == 201 or response.status_code == 409:
+                response.success()
+            else:
                 response.failure(f"Registration failed: {response.text}")
 
-        # 2. Login
+        # Login
         response = self.client.post("/auth/login", json={
             "username": self.username,
             "password": self.password
-        }, name="/auth/login") # Added name for clearer reporting
+        }, name="/auth/login")
         
         if response.status_code == 200:
-            self.token = response.json().get("token")
-            self.user_id = response.json().get("user_id")
+            self.token = response.json().get('token')
+            print(f"Login successful for {self.username}")
         else:
-            # Use Locust's logging instead of print for a clean log
-            print(f"Login failed for {self.username}") 
-
+            print(f"Login failed for {self.username} with status {response.status_code}")
     @task(1)
     def view_cards(self):
         """Weight 1: Occasionally view the cards"""
