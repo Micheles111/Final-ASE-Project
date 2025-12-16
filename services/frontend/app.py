@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import requests
+import logging
 import os
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 app = Flask(__name__)
-app.secret_key = 'frontend_secret_key'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'frontend_secret_key')
+ASMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin123!')
 debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
 API_GATEWAY = "https://api-gateway:5000"
@@ -80,7 +82,9 @@ def login():
         error_msg = "Login failed."
         try:
             error_msg = resp.json().get('error', 'Login failed.')
-        except: pass
+        except (ValueError, AttributeError) as e:
+            logging.error(f"Error processing JSON response:{e}")
+            error_msg = "Internal Server Error"
         flash(f"{error_msg} if you dont have an account, ¡LOGIN NOW!")
         return redirect(url_for('index'))
 
@@ -105,8 +109,10 @@ def register():
     else:
         error_msg = "Registration failed."
         try:
-            error_msg = auth_resp.json().get('error', "Registration failed.")
-        except: pass
+            error_msg = resp.json().get('error', 'Registration failed.')
+        except (ValueError, AttributeError) as e:
+            logging.error(f"Error processing JSON response:{e}")
+            error_msg = "Internal Server Error"
         flash(error_msg)
         
     return redirect(url_for('index'))
@@ -179,8 +185,11 @@ def update_profile():
         flash("Profile updated successfully!")
     else:
         error_msg = "Update failed."
-        try: error_msg = resp.json().get('error', 'Update failed.')
-        except: pass
+        try: 
+            error_msg = resp.json().get('error', 'Update failed.')
+        except (ValueError, AttributeError) as e:
+            logging.error(f"Error processing JSON response:{e}")
+            error_msg = "Internal Server Error"
         flash(error_msg)
     return redirect(url_for('profile'))
 
@@ -429,7 +438,7 @@ def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        if username == 'admin' and password == 'Admin123!':
+        if username == 'admin' and password == ASMIN_PASSWORD:
             session['admin_logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:

@@ -94,7 +94,8 @@ services:
   match-service:
     build: ./services/match-service
     environment:
-      REDIS_HOST: redis
+      - REQUESTS_CA_BUNDLE=/app/certs/cert.pem
+      - REDIS_HOST=redis
     volumes:
       - ./certs:/app/certs:ro
     command: gunicorn --bind 0.0.0.0:5000 --certfile=/app/certs/cert.pem --keyfile=/app/certs/key.pem app:app
@@ -131,6 +132,10 @@ services:
       - api-gateway
     networks:
       - backend-network
+    environment:
+      - FLASK_SECRET_KEY=clave_muy_secreta_123
+      - ADMIN_PASSWORD=UnaContraseñaMasFuerte
+      - FLASK_DEBUG=False
 
 networks:
   backend-network:
