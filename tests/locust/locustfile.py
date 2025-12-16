@@ -13,7 +13,9 @@ class EscobaPlayer(HttpUser):
         It registers and logs in to get the token.
         """
         self.username = f"player_{str(uuid.uuid4())[:8]}"
-        self.password = "password123"
+        # MODIFICA QUI: Password complessa per soddisfare i requisiti del backend
+        # (Maiuscola, Numero, Carattere Speciale, lunghezza 8-20)
+        self.password = "Password123!" 
         self.email = f"{self.username}@test.com"
         self.token = None
         self.user_id = None # Initialize user_id

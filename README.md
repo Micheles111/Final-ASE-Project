@@ -246,7 +246,7 @@ openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 36
 
 **Project**: FinalASEProject1
 **Subject**: Advanced Software Engineering (ASE)
-**Course**: 2024-2025
+**Course**: 2025-2026
 **Members**:
 - Elena Martínez Vazquez (e.martinezvazquez@student.unipi.it)
 - Mario Perez Perez (@student.unipi.it)
